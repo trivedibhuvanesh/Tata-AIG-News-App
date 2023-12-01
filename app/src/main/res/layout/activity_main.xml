@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        tools:context=".MainActivity">
+
+        <include
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            layout="@layout/toolbar"/>
+        <fragment
+            android:id="@+id/rootFragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:name="androidx.navigation.fragment.NavHostFragment"
+            app:defaultNavHost="true"
+            app:navGraph="@navigation/navigation"
+            />
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNavBar"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            app:menu="@menu/bottom_nav_menu"
+            android:background="@color/white"
+            app:itemRippleColor="@color/colorPrimary"
+            app:itemIconTint="@drawable/nav_item_color_state"
+            app:itemTextColor="@drawable/nav_item_color_state"
+            app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"
+            app:labelVisibilityMode="unlabeled"
+            />
+    </LinearLayout>
+</layout>

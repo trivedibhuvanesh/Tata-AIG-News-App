@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">TATA AIG News App</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="title_activity_news_details_compose">NewsDetailsActivityCompose</string>
+</resources>

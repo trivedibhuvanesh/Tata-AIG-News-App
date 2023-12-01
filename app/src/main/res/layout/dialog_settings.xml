@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/white_bg"
+        android:paddingBottom="16dp">
+
+        <LinearLayout
+            android:id="@+id/headerLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:orientation="vertical"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/textView13"
+                style="@style/TextStyleBold"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Settings"
+                android:textColor="#4A4A4A"
+                android:textSize="16sp" />
+
+            <RadioGroup
+                android:id="@+id/radioGroup"
+                android:layout_marginTop="8dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/rbLightMode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Light Mode"
+                    style="@style/TextStyleNormal" />
+
+                <RadioButton
+                    android:id="@+id/rbDarkMode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Dark Mode"
+                    style="@style/TextStyleNormal" />
+
+                <RadioButton
+                    android:id="@+id/rbSystemDefault"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="System Default"
+                    style="@style/TextStyleNormal" />
+            </RadioGroup>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/btnCancel"
+            style="@style/TextStyleBold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="32dp"
+            android:text="Cancel"
+            android:textAlignment="textEnd"
+            android:textAllCaps="false"
+            android:textColor="#f95959"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnApply"
+            app:layout_constraintTop_toBottomOf="@+id/headerLayout"
+            app:layout_constraintWidth_percent="0.40" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnApply"
+            style="@style/TextStyleBold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16sp"
+            android:background="@drawable/layout_rounded_shape"
+            android:padding="10dp"
+            android:text="Apply"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/headerLayout"
+            app:layout_constraintWidth_percent="0.60" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>
