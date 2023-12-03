@@ -4,10 +4,10 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.databinding.BindingAdapter
-import com.example.tataaignewsapp.formatDate
-import com.example.tataaignewsapp.gone
-import com.example.tataaignewsapp.loadImageFromGlide
-import com.example.tataaignewsapp.visible
+import com.example.tataaignewsapp.util.formatDate
+import com.example.tataaignewsapp.util.gone
+import com.example.tataaignewsapp.util.loadImageFromGlide
+import com.example.tataaignewsapp.util.visible
 
 
 @BindingAdapter("app:setImageFromURL")

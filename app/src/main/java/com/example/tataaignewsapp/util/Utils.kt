@@ -1,13 +1,16 @@
-package com.example.tataaignewsapp
+package com.example.tataaignewsapp.util
 
 import android.content.Context
+import android.net.Uri
 import android.view.View
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.example.tataaignewsapp.R
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
@@ -17,7 +20,9 @@ fun getCircularLoader(context: Context): CircularProgressDrawable {
     val circularProgressDrawable = CircularProgressDrawable(context)
     circularProgressDrawable.strokeWidth = 8f
     circularProgressDrawable.centerRadius = 30f
-    circularProgressDrawable.setColorSchemeColors(ContextCompat.getColor(context, R.color.colorPrimary),
+    circularProgressDrawable.setColorSchemeColors(ContextCompat.getColor(context,
+        R.color.colorPrimary
+    ),
     )
     circularProgressDrawable.start()
     return circularProgressDrawable
@@ -50,10 +55,6 @@ fun formatDate(inputDate: String, inputFormat: String, outputFormat: String): St
 
 fun View.visible() {
     this.visibility = View.VISIBLE
-}
-
-fun View.invisible() {
-    this.visibility = View.INVISIBLE
 }
 
 fun View.gone() {

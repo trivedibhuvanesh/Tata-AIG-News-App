@@ -1,7 +1,7 @@
 package com.example.tataaignewsapp.di
 
-import com.example.tataaignewsapp.ApiInterface
-import com.example.tataaignewsapp.BASE_URL
+import com.example.tataaignewsapp.api.ApiInterface
+import com.example.tataaignewsapp.util.BASE_URL
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:name=".TataAIGNewsApplication"
+        android:name=".application.TataAIGNewsApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -18,16 +18,14 @@
         android:theme="@style/Theme.TATAAIGNewsApp"
         tools:targetApi="31">
         <activity
-            android:name=".NewsDetailsActivityCompose"
+            android:name=".ui.activity.NewsDetailsActivityCompose"
             android:exported="false"
             android:screenOrientation="portrait"
             android:label="@string/title_activity_news_details_compose"
             android:theme="@style/Theme.TATAAIGNewsApp" />
+
         <activity
-            android:name=".NewsDetailActivity"
-            android:exported="false" />
-        <activity
-            android:name=".MainActivity"
+            android:name=".ui.activity.MainActivity"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustNothing"
             android:exported="true">

@@ -1,14 +1,10 @@
-package com.example.tataaignewsapp
+package com.example.tataaignewsapp.viewmodel
 
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.room.ColumnInfo
 import com.example.tataaignewsapp.data.model.Article
-import com.example.tataaignewsapp.data.model.Source
 import com.example.tataaignewsapp.db.ArticleRepositoryImpl
-import com.google.gson.annotations.SerializedName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,10 +16,10 @@ class ArticleViewModel @Inject constructor(private val repository: ArticleReposi
 
 
     val isBookmarked = mutableStateOf(false)
+    var searchKeyword = ""
 
-    private val _article = MutableLiveData<Article?>()
-    val articleLiveDate: LiveData<Article?>
-        get() = _article
+    var randomArticles = mutableStateListOf<Article?>()
+
 
     fun insertArticle(article: Article) {
         article.isBookmarked = isBookmarked.value
@@ -38,19 +34,6 @@ class ArticleViewModel @Inject constructor(private val repository: ArticleReposi
         }
     }
 
-    fun updateArticle(article: Article) {
-        CoroutineScope(Dispatchers.IO).launch {
-            repository.updateArticle(article)
-        }
-    }
-
-    suspend fun deleteArticle(article: Article) = repository.deleteArticle(article)
-
-    //suspend fun deleteArticleById(id: Int) = repository.deleteArticleById(id)
-
-    suspend fun clearArticle() = repository.clearArticle()
-
-    fun getAllArticles() = repository.getAllArticles()
 
     suspend fun getArticleById(id: String) = repository.getArticleById(id)
 
@@ -60,5 +43,7 @@ class ArticleViewModel @Inject constructor(private val repository: ArticleReposi
     suspend fun getBookmarkedArticlesByTitle(keyword: String) = repository.getBookmarkedArticlesByTitle(keyword)
 
     suspend fun getPagedArticles(limit: Int, offset: Int) = repository.getPagedArticles(limit, offset)
+
+    suspend fun getRandomArticles(limit: Int) = repository.getRandomArticles(limit)
 
 }

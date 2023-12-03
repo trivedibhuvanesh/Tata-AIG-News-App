@@ -1,4 +1,4 @@
-package com.example.tataaignewsapp
+package com.example.tataaignewsapp.ui.activity
 
 import android.app.AlertDialog
 import android.content.Context
@@ -12,6 +12,9 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
+import com.example.tataaignewsapp.util.PREF_SELECTED_THEME
+import com.example.tataaignewsapp.R
+import com.example.tataaignewsapp.util.SHARED_PREF_NAME
 import com.example.tataaignewsapp.databinding.ActivityMainBinding
 import com.example.tataaignewsapp.databinding.DialogSettingsBinding
 import dagger.hilt.android.AndroidEntryPoint

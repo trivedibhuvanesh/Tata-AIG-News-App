@@ -1,4 +1,4 @@
-package com.example.tataaignewsapp
+package com.example.tataaignewsapp.ui.fragment
 
 import android.content.Intent
 import android.os.Bundle
@@ -11,18 +11,30 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AbsListView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.tataaignewsapp.api.DataHandler
+import com.example.tataaignewsapp.ui.adapter.NewsAdapter
+import com.example.tataaignewsapp.ui.activity.NewsDetailsActivityCompose
+import com.example.tataaignewsapp.util.QUERY_PAGE_SIZE
+import com.example.tataaignewsapp.R
+import com.example.tataaignewsapp.viewmodel.SearchViewModel
 import com.example.tataaignewsapp.databinding.FragmentSearchBinding
+import com.example.tataaignewsapp.util.gone
+import com.example.tataaignewsapp.util.isInternetOn
+import com.example.tataaignewsapp.util.toast
+import com.example.tataaignewsapp.util.visible
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 
 @AndroidEntryPoint
 class SearchFragment : Fragment() {
@@ -32,10 +44,7 @@ class SearchFragment : Fragment() {
 
     private lateinit var newsAdapter: NewsAdapter
 
-    private var isLoading = false
-    private var isLastPage = false
-    private var isScrolling = false
-    var job: Job? = null
+    private var job: Job? = null
 
     private val scrollListener = object : RecyclerView.OnScrollListener() {
         override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -46,15 +55,15 @@ class SearchFragment : Fragment() {
             val visibleItemCount = layoutManager.childCount
             val totalItemCount = layoutManager.itemCount
 
-            val isNotLoadingAndNotLastPage = !isLoading && !isLastPage
+            val isNotLoadingAndNotLastPage = !searchViewModel.isLoading && !searchViewModel.isLastPage
             val isAtLastItem = firstVisibleItemPosition + visibleItemCount >= totalItemCount
             val isNotAtBeginning = firstVisibleItemPosition >= 0
             val isTotalMoreThanVisible = totalItemCount >= QUERY_PAGE_SIZE
             val shouldPaginate = isNotLoadingAndNotLastPage && isAtLastItem && isNotAtBeginning &&
-                    isTotalMoreThanVisible && isScrolling
+                    isTotalMoreThanVisible && searchViewModel.isScrolling
             if(shouldPaginate) {
                 callSearchApi()
-                isScrolling = false
+                searchViewModel.isScrolling = false
             } else {
                 binding.rvNews.setPadding(0, 0, 0, 0)
             }
@@ -63,7 +72,7 @@ class SearchFragment : Fragment() {
         override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
             super.onScrollStateChanged(recyclerView, newState)
             if(newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
-                isScrolling = true
+                searchViewModel.isScrolling = true
             }
         }
     }
@@ -87,8 +96,21 @@ class SearchFragment : Fragment() {
             }
 
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                searchViewModel.searchQuery = p0.toString()
-                callSearchApi()
+
+                job?.cancel()
+                job = MainScope().launch {
+                    delay(500)
+                    p0?.let {
+                        if (p0.toString().isNotEmpty()) {
+                            searchViewModel.searchQuery = p0.toString()
+
+                            searchViewModel.articlesList.clear()
+                            setRecyclerView()
+                            searchViewModel.searchNewsPage = 1
+                            callSearchApi()
+                        }
+                    }
+                }
             }
 
             override fun afterTextChanged(p0: Editable?) {
@@ -108,7 +130,14 @@ class SearchFragment : Fragment() {
     private fun callSearchApi() {
         job?.cancel()
         job = CoroutineScope(Dispatchers.IO).launch {
-            searchViewModel.searchNews(QUERY_PAGE_SIZE)
+            yield()
+            if(isInternetOn(requireContext())) {
+                searchViewModel.searchNews(QUERY_PAGE_SIZE)
+            } else {
+                withContext(Dispatchers.Main) {
+                    requireContext().toast("No Internet")
+                }
+            }
         }
     }
 
@@ -123,26 +152,20 @@ class SearchFragment : Fragment() {
                     hideProgressBar()
                     Log.d("TAG", "setObserver: ${it.data}")
 
-                    searchViewModel.articlesList.addAll(it.data?.articles?.toMutableList() ?: mutableListOf())
                     newsAdapter.addData(searchViewModel.articlesList)
-                    val totalPages = (it.data?.totalResults?.div(QUERY_PAGE_SIZE))?.plus(2)
-                    isLastPage = searchViewModel.searchNewsPage == totalPages
-                    searchViewModel.searchNewsPage++
+                    val totalPages = kotlin.math.ceil(it.data?.totalResults?.div(QUERY_PAGE_SIZE.toDouble()) ?: 0.0)
+                    searchViewModel.isLastPage = searchViewModel.searchNewsPage >= totalPages.toInt()
                 }
 
                 else -> {
                     hideProgressBar()
                 }
-
-
             }
-
-
         }
     }
 
     private fun setRecyclerView() {
-        newsAdapter = NewsAdapter() { article ->
+        newsAdapter = NewsAdapter { article ->
 
             val intent = Intent(requireActivity(), NewsDetailsActivityCompose::class.java)
             intent.putExtra("Article", article)
@@ -156,7 +179,7 @@ class SearchFragment : Fragment() {
     private fun hideProgressBar() {
         binding.centerProgressBar.gone()
         binding.paginationProgressBar.gone()
-        isLoading = false
+        searchViewModel.isLoading = false
     }
 
     private fun showProgressBar() {
@@ -165,6 +188,6 @@ class SearchFragment : Fragment() {
         } else {
             binding.paginationProgressBar.visible()
         }
-        isLoading = true
+        searchViewModel.isLoading = true
     }
 }

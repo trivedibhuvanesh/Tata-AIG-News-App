@@ -1,12 +1,9 @@
-package com.example.tataaignewsapp
+package com.example.tataaignewsapp.ui.fragment
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.AttributeSet
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -15,11 +12,14 @@ import android.widget.TextView
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.example.tataaignewsapp.viewmodel.ArticleViewModel
+import com.example.tataaignewsapp.ui.adapter.NewsAdapter
+import com.example.tataaignewsapp.ui.activity.NewsDetailsActivityCompose
+import com.example.tataaignewsapp.R
 import com.example.tataaignewsapp.data.model.Article
 import com.example.tataaignewsapp.databinding.FragmentBookmarksBinding
-import com.example.tataaignewsapp.databinding.FragmentHomeBinding
+import com.example.tataaignewsapp.util.gone
+import com.example.tataaignewsapp.util.visible
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,23 +42,23 @@ class BookmarksFragment : Fragment() {
     ): View {
         // Inflate the layout for this fragment
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_bookmarks, container, false)
-        setRecyclerView()
-        setupArticleSearch()
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setRecyclerView()
+        setupArticleSearch()
 
     }
 
-    private fun getBookmarkedArticles() {
+    private fun getBookmarkedArticles(keyword: String) {
         binding.centerProgressBar.visible()
         lifecycleScope.launch {
 
 
             val bookmarkedArticlesList = CoroutineScope(Dispatchers.IO).async {
-                articleViewModel.getBookmarkedArticles()
+                articleViewModel.getBookmarkedArticlesByTitle(keyword)
             }
 
             withContext(Dispatchers.Main) {
@@ -86,7 +86,7 @@ class BookmarksFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         requireActivity().findViewById<TextView>(R.id.tv_current_header).text = "Bookmarks"
-        getBookmarkedArticles()
+        getBookmarkedArticles(articleViewModel.searchKeyword)
     }
 
     private fun setupArticleSearch() {
@@ -99,6 +99,7 @@ class BookmarksFragment : Fragment() {
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
                 job?.cancel()
                 job = CoroutineScope(Dispatchers.IO).launch {
+                    articleViewModel.searchKeyword = p0.toString()
                     val bookmarkedArticlesList = articleViewModel.getBookmarkedArticlesByTitle(p0.toString())
                         articlesList = bookmarkedArticlesList?.toMutableList() ?: mutableListOf()
 

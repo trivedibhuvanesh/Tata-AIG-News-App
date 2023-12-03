@@ -1,4 +1,4 @@
-package com.example.tataaignewsapp
+package com.example.tataaignewsapp.api
 
 import com.example.tataaignewsapp.data.model.NewsResponse
 import retrofit2.Response

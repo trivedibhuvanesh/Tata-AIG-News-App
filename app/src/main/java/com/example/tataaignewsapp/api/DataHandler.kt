@@ -1,4 +1,4 @@
-package com.example.tataaignewsapp
+package com.example.tataaignewsapp.api
 
 sealed class DataHandler<T>(
     val data: T? = null,

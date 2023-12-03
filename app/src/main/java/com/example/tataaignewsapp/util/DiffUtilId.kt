@@ -1,9 +1,9 @@
-package com.example.tataaignewsapp
+package com.example.tataaignewsapp.util
 
 import androidx.recyclerview.widget.DiffUtil
 import com.example.tataaignewsapp.data.model.Article
 
-class DiffUtilTitle(
+class DiffUtilId(
     private val oldList: List<Article?>?,
     private val newList: List<Article?>?
 ): DiffUtil.Callback() {
@@ -16,13 +16,10 @@ class DiffUtilTitle(
     }
 
     override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-        return oldList?.get(oldItemPosition)?.title == newList?.get(newItemPosition)?.title
+        return oldList?.get(oldItemPosition)?.id == newList?.get(newItemPosition)?.id
     }
 
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-        return oldList?.get(oldItemPosition)?.title == newList?.get(newItemPosition)?.title
-                && oldList?.get(oldItemPosition)?.description == newList?.get(newItemPosition)?.description
-                && oldList?.get(oldItemPosition)?.author == newList?.get(newItemPosition)?.author
-                && oldList?.get(oldItemPosition)?.publishedAt == newList?.get(newItemPosition)?.publishedAt
+        return oldList?.get(oldItemPosition)?.id == newList?.get(newItemPosition)?.id
     }
 }

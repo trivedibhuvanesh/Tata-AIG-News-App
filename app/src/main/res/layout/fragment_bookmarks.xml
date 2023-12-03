@@ -6,7 +6,7 @@
     <data>
         <!--<variable
             name="homeViewModel"
-            type="com.example.tataaignewsapp.HomeViewModel" />-->
+            type="com.example.tataaignewsapp.viewmodel.HomeViewModel" />-->
 
 
     </data>
@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/colorBackground"
-        tools:context=".HomeFragment">
+        tools:context=".ui.fragment.HomeFragment">
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/textInputLayoutSearch"

@@ -1,4 +1,4 @@
-package com.example.tataaignewsapp
+package com.example.tataaignewsapp.util
 
 import android.content.Context
 import android.net.ConnectivityManager

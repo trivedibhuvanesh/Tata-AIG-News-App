@@ -1,4 +1,4 @@
-package com.example.tataaignewsapp
+package com.example.tataaignewsapp.ui.fragment
 
 import android.content.Intent
 import android.os.Bundle
@@ -13,11 +13,24 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.tataaignewsapp.viewmodel.ArticleViewModel
+import com.example.tataaignewsapp.api.DataHandler
+import com.example.tataaignewsapp.viewmodel.HomeViewModel
+import com.example.tataaignewsapp.ui.adapter.NewsAdapter
+import com.example.tataaignewsapp.ui.activity.NewsDetailsActivityCompose
+import com.example.tataaignewsapp.util.QUERY_PAGE_SIZE
+import com.example.tataaignewsapp.R
 import com.example.tataaignewsapp.databinding.FragmentHomeBinding
+import com.example.tataaignewsapp.util.gone
+import com.example.tataaignewsapp.util.isInternetOn
+import com.example.tataaignewsapp.util.md5
+import com.example.tataaignewsapp.util.toast
+import com.example.tataaignewsapp.util.visible
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
@@ -30,12 +43,7 @@ class HomeFragment : Fragment() {
     private val homeViewModel: HomeViewModel by viewModels()
     private val articleViewModel: ArticleViewModel by viewModels()
     private lateinit var newsAdapter: NewsAdapter
-    private var limit = 5
-    private var offset = 0
-    private var isLoading = false
-    private var isLastPage = false
-    private var isScrolling = false
-    private var isOffline = false
+
     private var job: Job? = null
 
     private val scrollListener = object : RecyclerView.OnScrollListener() {
@@ -47,20 +55,20 @@ class HomeFragment : Fragment() {
             val visibleItemCount = layoutManager.childCount
             val totalItemCount = layoutManager.itemCount
 
-            val isNotLoadingAndNotLastPage = !isLoading && !isLastPage
+            val isNotLoadingAndNotLastPage = !homeViewModel.isLoading && !homeViewModel.isLastPage
             val isAtLastItem = firstVisibleItemPosition + visibleItemCount >= totalItemCount
             val isNotAtBeginning = firstVisibleItemPosition >= 0
             val isTotalMoreThanVisible = totalItemCount >= QUERY_PAGE_SIZE
             val shouldPaginate =
-                isNotLoadingAndNotLastPage && isAtLastItem && isNotAtBeginning && isTotalMoreThanVisible && isScrolling
+                isNotLoadingAndNotLastPage && isAtLastItem && isNotAtBeginning && isTotalMoreThanVisible && homeViewModel.isScrolling
             if (shouldPaginate) {
-                if(isOffline) {
-                    getPagedArticles(limit,offset)
+                if(homeViewModel.isOffline) {
+                    getPagedArticles(homeViewModel.limit,homeViewModel.offset)
                 } else {
 
                     callNewsApi()
                 }
-                isScrolling = false
+                homeViewModel.isScrolling = false
             } else {
                 binding.rvNews.setPadding(0, 0, 0, 0)
             }
@@ -69,7 +77,7 @@ class HomeFragment : Fragment() {
         override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
             super.onScrollStateChanged(recyclerView, newState)
             if (newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
-                isScrolling = true
+                homeViewModel.isScrolling = true
             }
         }
     }
@@ -78,23 +86,32 @@ class HomeFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_home, container, false)
-        setRecyclerView()
-        callNewsApi()
-        setObserver()
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setRecyclerView()
+        if(homeViewModel.articlesList.isEmpty()) {
+            callNewsApi()
+        }
+        setObserver()
+
+        if(homeViewModel.isOffline){
+            newsAdapter.addData(homeViewModel.articlesList)
+        }
     }
 
     private fun callNewsApi() {
         job?.cancel()
         job = CoroutineScope(Dispatchers.IO).launch {
             yield()
-            homeViewModel.getTopHeadlinesJob?.cancel()
             if(isInternetOn(requireContext())) {
                 homeViewModel.getTopHeadlines(
                     "in", QUERY_PAGE_SIZE
                 )
             } else {
-                getPagedArticles(limit, offset)
+                getPagedArticles(homeViewModel.limit, homeViewModel.offset)
             }
         }
 
@@ -116,20 +133,16 @@ class HomeFragment : Fragment() {
                     hideProgressBar()
                     Log.d("TAG", "setObserver: ${it.data}")
 
-                    homeViewModel.articlesList.addAll(
-                        it.data?.articles?.toMutableList() ?: mutableListOf()
-                    )
                     newsAdapter.addData(homeViewModel.articlesList)
                     val totalPages = kotlin.math.ceil(it.data?.totalResults?.div(QUERY_PAGE_SIZE.toDouble()) ?: 0.0)
-                    isLastPage = homeViewModel.searchNewsPage == totalPages.toInt()
-                    homeViewModel.searchNewsPage++
+                    homeViewModel.isLastPage = homeViewModel.searchNewsPage >= totalPages.toInt()
                     if (it.data?.articles?.isNotEmpty() == true) {
                         it.data.articles.forEach { article ->
                             if (article != null) {
                                 article.id = md5(
                                     article.author ?: "",
-                                    article.publishedAt ?: "",
-                                    article.title ?: "",
+                                    article.publishedAt,
+                                    article.title,
                                 )
                                 articleViewModel.insertArticleReplace(article)
                             }
@@ -140,15 +153,15 @@ class HomeFragment : Fragment() {
                 else -> {
                     hideProgressBar()
                     requireContext().toast("Running in offline mode")
-                    isOffline = true
-                    getPagedArticles(limit,offset)
+                    getPagedArticles(homeViewModel.limit,homeViewModel.offset)
                 }
             }
         }
     }
 
     private fun setRecyclerView() {
-        newsAdapter = NewsAdapter() { article ->
+
+        newsAdapter = NewsAdapter { article ->
 
             val intent = Intent(requireActivity(), NewsDetailsActivityCompose::class.java)
             intent.putExtra("Article", article)
@@ -169,7 +182,7 @@ class HomeFragment : Fragment() {
     private fun hideProgressBar() {
         binding.centerProgressBar.gone()
         binding.paginationProgressBar.gone()
-        isLoading = false
+        homeViewModel.isLoading = false
     }
 
     private fun showProgressBar() {
@@ -178,19 +191,27 @@ class HomeFragment : Fragment() {
         } else {
             binding.paginationProgressBar.visible()
         }
-        isLoading = true
+        homeViewModel.isLoading = true
     }
 
     private fun getPagedArticles(limit: Int, offset: Int) {
-        CoroutineScope(Dispatchers.IO).launch {
+        showProgressBar()
+        homeViewModel.isOffline = true
+        job?.cancel()
+        job = CoroutineScope(Dispatchers.IO).launch {
+            delay(500) // Just to show that Pagination is working
             Log.d("HomeFragment", "e: limit: $limit and offset: $offset")
             val articlesList = articleViewModel.getPagedArticles(limit, offset)
             homeViewModel.articlesList.addAll(
                 articlesList?.toMutableList() ?: mutableListOf()
             )
-            this@HomeFragment.offset = offset + limit
+            this@HomeFragment.homeViewModel.offset = offset + limit
             withContext(Dispatchers.Main) {
+                if(articlesList?.isEmpty() == true) {
+                    binding.rvNews.removeOnScrollListener(scrollListener)
+                }
             newsAdapter.addData(homeViewModel.articlesList)
+                hideProgressBar()
         }
     }
     }

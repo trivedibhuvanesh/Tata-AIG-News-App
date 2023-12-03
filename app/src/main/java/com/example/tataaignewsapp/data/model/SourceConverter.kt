@@ -10,7 +10,7 @@ class SourceConverter {
     }
 
     @TypeConverter
-    fun toSource(source: String): Source? {
+    fun toSource(source: String): Source {
         val sourceId = source.substringBefore(",")
         val sourceName = source.substringAfter(",")
         return Source(

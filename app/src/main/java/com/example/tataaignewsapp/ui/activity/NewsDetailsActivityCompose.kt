@@ -1,18 +1,25 @@
-package com.example.tataaignewsapp
+package com.example.tataaignewsapp.ui.activity
 
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -20,35 +27,42 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
+import com.example.tataaignewsapp.R
 import com.example.tataaignewsapp.data.model.Article
 import com.example.tataaignewsapp.ui.theme.TATAAIGNewsAppTheme
+import com.example.tataaignewsapp.util.formatDate
+import com.example.tataaignewsapp.util.getCircularLoader
+import com.example.tataaignewsapp.util.md5
+import com.example.tataaignewsapp.viewmodel.ArticleViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.math.BigInteger
-import java.security.MessageDigest
 
 @AndroidEntryPoint
 class NewsDetailsActivityCompose : AppCompatActivity() {
@@ -76,12 +90,14 @@ class NewsDetailsActivityCompose : AppCompatActivity() {
         } else {
             finish()
         }
+        getRandomArticles()
 
-        setObserver()
         setContent {
             val context = LocalContext.current
-            val scrollBehavior =
-                TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+            val configuration = LocalConfiguration.current
+            val screenWidth = configuration.screenWidthDp
+            val screenHeight = configuration.screenHeightDp
+
             TATAAIGNewsAppTheme {
             Scaffold(
                 topBar = {
@@ -102,7 +118,7 @@ class NewsDetailsActivityCompose : AppCompatActivity() {
                         },
                         actions = {
                             Image(
-                                painterResource(id = if(articleViewModel.isBookmarked.value == true) {
+                                painterResource(id = if(articleViewModel.isBookmarked.value) {
                                     R.drawable.baseline_bookmark_added_24
                                 }
                                 else {
@@ -120,14 +136,6 @@ class NewsDetailsActivityCompose : AppCompatActivity() {
                                 }
                             )
                         },
-
-                        /*colors = TopAppBarDefaults.largeTopAppBarColors(
-                            containerColor = Color.White,
-                            scrolledContainerColor = Color.White,
-                            navigationIconContentColor = Color.Black,
-                            titleContentColor = Color.Black,
-                            actionIconContentColor = Color.Black,
-                        )*/
                     )
 
                 }) { innerPadding ->
@@ -180,7 +188,7 @@ class NewsDetailsActivityCompose : AppCompatActivity() {
 
                     Text(
                         modifier = Modifier.padding(8.dp),
-                        text = "${article?.description}",
+                        text = article?.description ?: "",
                         fontSize = 18.sp,
                         color = colorResource(id = R.color.black)
                     )
@@ -199,29 +207,106 @@ class NewsDetailsActivityCompose : AppCompatActivity() {
                             Text(text = "Open in Browser", color = colorResource(id = R.color.white))
                         }
                     }
+
+                    if(articleViewModel.randomArticles.isNotEmpty()) {
+
+                        Text(
+                            modifier = Modifier.padding(8.dp),
+                            text = "More Articles",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 32.sp,
+                            color = colorResource(id = R.color.black)
+                        )
+
+                        LazyRow(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                        ) {
+                            items(articleViewModel.randomArticles) {
+                                ChildMoreArticles(context, it, screenWidth, screenHeight)
+                            }
+                        }
+                    }
                 }
-            }}
+            }
+            }
         }
     }
 
-    private fun setObserver() {
-        articleViewModel.articleLiveDate.observe(this) {
+    @OptIn(ExperimentalGlideComposeApi::class)
+    @Composable
+    private fun ChildMoreArticles(context: Context, item: Article?, screenWidth: Int, screenHeight: Int) {
 
-            if (it != null) {
-                articleViewModel.apply {
-                    isBookmarked.value = it.isBookmarked ?: false
+        Card(
+            modifier = Modifier
+                .padding(16.dp).shadow(elevation = 16.dp)
+        ) {
+            Column(modifier = Modifier
+                .width(screenWidth.times(0.75).dp)
+                .background(colorResource(id = R.color.white),
+                    shape = RoundedCornerShape(16.dp)
+
+                ).clickable {
+                    val intent = Intent(this@NewsDetailsActivityCompose, NewsDetailsActivityCompose::class.java)
+                    intent.putExtra("Article", item)
+                    this@NewsDetailsActivityCompose.startActivity(intent)
+                    finish()
                 }
-                article = it
+            ) {
 
+                GlideImage(
+                    modifier = Modifier
+                        .width(screenWidth.times(0.9).dp)
+                        .height(180.dp),
+                    model = item?.urlToImage,
+                    contentDescription = null,
+                    loading = placeholder(getCircularLoader(context)),
+                    failure = placeholder(R.drawable.no_image_available_600_x_400),
+                    contentScale = ContentScale.Fit
+                )
 
-            } else {
-                if(article != null) {
-                    articleViewModel.apply {
-                        isBookmarked.value = false
-                    }
-                    article?.isBookmarked = false
-                    articleViewModel.insertArticle(article!!)
+                Text(
+                    modifier = Modifier.padding(8.dp),
+                    text = "${item?.title}",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = colorResource(id = R.color.black)
+                )
+
+                val date = if (item?.publishedAt.isNullOrEmpty().not()) {
+                    "Date: ${
+                        formatDate(
+                            item?.publishedAt ?: "",
+                            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                            "dd.MM.yyyy 'at' hh:mm a"
+                        )
+                    }"
+                } else {
+                    ""
                 }
+                    Text(
+                        modifier = Modifier.padding(start = 8.dp, end = 8.dp),
+                        text = date,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 10.sp,
+                        color = Color.Gray
+                    )
+
+
+                    Text(
+                        modifier = Modifier.padding(start = 8.dp, end = 8.dp),
+                        text = if (item?.author.isNullOrEmpty().not()){ "Author: ${item?.author}"} else {""} ,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 10.sp,
+                        color = Color.Gray
+                    )
+
+
+                Spacer(modifier = Modifier.padding(bottom = 8.dp))
+
             }
         }
     }
@@ -244,10 +329,16 @@ class NewsDetailsActivityCompose : AppCompatActivity() {
         }
     }
 
-    fun md5(author: String, publishedAt: String, title: String): String {
-        val input = author+publishedAt+title
-        val md = MessageDigest.getInstance("MD5")
-        return BigInteger(1, md.digest(input.toByteArray())).toString(16).padStart(32, '0')
+    private fun getRandomArticles() {
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val randomArticles = articleViewModel.getRandomArticles(
+                11,
+            )?.toMutableList()
+            randomArticles?.remove(article)
+            articleViewModel.randomArticles.clear()
+            articleViewModel.randomArticles.addAll(randomArticles ?: mutableListOf())
+        }
     }
 
     private fun openURLInBrowser(url: String) {
